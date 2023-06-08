@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% load cart %}
+
+{% block content %}
+<div class="container my-3">
+    <table class="table table-success table-striped">
+                <tr class="text-center">
+                    <th>Sno.</th>
+                    <th>Product Name</th>
+                    <th>Product Image</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total Price</th>
+                </tr>
+                
+                {% for od in order_details %}
+                <tr class="text-center">
+                        <td>{{forloop.counter}}</td>
+                        <td>{{od.product.pro_name}}</td>
+                        <td>
+                            <img src="{{od.product.pro_image.url}}" alt="" width=50 height=50>
+                        </td>
+                        <td>Rs.{{od.price}}</td>
+                        <td>{{od.quantity}}</td>
+                        <td>Rs.{{od.price|ord_details:od.quantity}}</td>
+                </tr>
+                {% endfor %}
+                 <tr class="text-center">
+                    <td colspan=4 ><h3>Payable Amount :</h3></td>
+                    <td>
+                        {% comment %} Rs.{{o_details|payable_amount:request.session.cart}} {% endcomment %}
+                    </td>
+                    <td>
+                        <div id="paypal-button-container"></div>
+                    </td>
+                </tr>
+          </table>
+
+</div>
+<script src="https://www.paypal.com/sdk/js?client-id=AQfZjxuCRG2TmW2SqD2UhhVMJngEwvgk7ZU7yAND36oAo32419hZeDRGxZujCnGyrplVieqMYEE9_0W2&currency=USD"></script>
+
+     <script>
+        // Render the PayPal button into #paypal-button-container
+        paypal.Buttons({
+
+            // Set up the transaction
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: '{{tp}}'
+                        }
+                    }]
+                });
+            },
+
+            // Finalize the transaction
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(orderData) {
+                    // Successful capture! For demo purposes:
+                    console.log('Capture result', orderData, JSON.stringify(orderData, null, 2));
+                    var transaction = orderData.purchase_units[0].payments.captures[0];
+                    alert('Transaction '+ transaction.status + ': ' + transaction.id + '\n\nSee console for all available details');
+
+                    // Replace the above to show a success message within this page, e.g.
+                    // const element = document.getElementById('paypal-button-container');
+                    // element.innerHTML = '';
+                    // element.innerHTML = '<h3>Thank you for your payment!</h3>';
+                   URL:  actions.redirect('thank_you.html'); 
+                });
+            }
+
+
+        }).render('#paypal-button-container');
+    </script>
+
+{% endblock content %}
+
